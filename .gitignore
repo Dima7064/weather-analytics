@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# dbt
+target/
+dbt_packages/
+logs/
+*.duckdb
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+dbt/profiles.yml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+data/
+*.csv
+*.parquet
+!dbt/seeds/*.csv
+
+# Docker volumes (локальные)
+pgdata/
+clickhouse-data/
+metabase-data/
