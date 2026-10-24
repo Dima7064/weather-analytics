@@ -1,7 +1,7 @@
 [project]
-name = "weather-analytics"
+name = "ecom-analytics"
 version = "0.1.0"
-description = "Weather analytics platform: ingestion, dbt, Airflow, BI"
+description = "E-commerce analytics platform: ingestion, dbt, Airflow, BI"
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
@@ -15,6 +15,7 @@ dependencies = [
     "polars>=0.20",
     "duckdb>=0.9",
     "typer>=0.9",
+    "rich>=13.0",
     "python-dotenv>=1.0",
 ]
 
@@ -26,30 +27,38 @@ dev = [
     "ruff>=0.4",
     "mypy>=1.8",
     "pre-commit>=3.6",
+    "types-requests>=2.31",
 ]
+
+[project.scripts]
+ecom-ingest = "ecom_ingest.cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ingestion/src/weather_ingest"]
+packages = ["ingestion/src/ecom_ingest"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 src = ["ingestion/src", "tests"]
+exclude = [".venv", "data"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+# Игнорируем предупреждения о кириллице в комментариях и строках
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
 mypy_path = "ingestion/src"
 ignore_missing_imports = true
+exclude = ["data/"]
 
 [tool.pytest.ini_options]
 testpaths = ["ingestion/tests", "tests"]
-addopts = "-v --cov=weather_ingest --cov-report=term-missing"
+addopts = "-v --cov=ecom_ingest --cov-report=term-missing"
 pythonpath = ["ingestion/src"]
