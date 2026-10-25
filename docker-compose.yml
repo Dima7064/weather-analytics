@@ -19,25 +19,11 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:24.3
     container_name: weather_clickhouse
-    environment:
-      CLICKHOUSE_DB: analytics
-      CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: ""
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ports:
       - "8123:8123"
       - "9000:9000"
     volumes:
       - clickhouse-data:/var/lib/clickhouse
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-    healthcheck:
-      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   metabase:
     image: metabase/metabase:latest
@@ -48,6 +34,36 @@ services:
       - metabase-data:/metabase-data
     environment:
       MB_DB_FILE: /metabase-data/metabase.db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  airflow:
+    image: apache/airflow:2.8.1-python3.11
+    container_name: weather_airflow
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://dbt:dbt@postgres:5432/analytics
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      # ИСПОЛЬЗУЕМ psycopg2-binary
+      - _PIP_ADDITIONAL_REQUIREMENTS=dbt-postgres pandas typer rich sqlalchemy psycopg2-binary pydantic python-dotenv
+      - PYTHONPATH=/opt/airflow/src
+      - DBT_HOST=postgres
+      - DBT_PORT=5432
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./ingestion/src:/opt/airflow/src
+      - ./dbt:/opt/airflow/dbt
+      - ./data:/opt/airflow/data
+    command: >
+      bash -c "airflow db migrate &&
+               airflow users create --username airflow --firstname Admin --lastname Admin --role Admin --email airflow@example.com --password Admin12345! || true &&
+               airflow standalone"
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -6,8 +7,9 @@ from sqlalchemy.engine import Engine
 
 logger = logging.getLogger(__name__)
 
-# Наш локальный Postgres из Docker
-DB_URL = "postgresql+psycopg://dbt:dbt@localhost:5433/analytics"
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5433")
+DB_URL = f"postgresql+psycopg2://dbt:dbt@{DB_HOST}:{DB_PORT}/analytics"
 
 
 def get_engine() -> Engine:
@@ -16,7 +18,7 @@ def get_engine() -> Engine:
 
 def init_db() -> None:
     """Создает схемы и таблицы в Postgres."""
-    logger.info("Инициализация базы данных...")
+    logger.info(f"Инициализация базы данных по адресу {DB_HOST}:{DB_PORT}...")
     engine = get_engine()
     with engine.begin() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS raw;"))
@@ -64,12 +66,15 @@ def load_csv_to_raw(csv_path: str, table_name: str) -> None:
     df = pd.read_csv(csv_path)
     engine = get_engine()
 
-    # Используем pandas to_sql для загрузки
+    # Очищаем таблицу перед вставкой новых данных, чтобы не было дублей
+    with engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE TABLE raw.{table_name};"))
+
     df.to_sql(
         name=table_name,
         con=engine,
         schema="raw",
-        if_exists="replace",  # Перезаписываем таблицу при каждом запуске (для простоты)
+        if_exists="append",  # Теперь мы ДОБАВЛЯЕМ данные, а не пересоздаем таблицу
         index=False,
         method="multi",
     )

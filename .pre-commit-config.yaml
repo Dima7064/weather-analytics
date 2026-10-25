@@ -4,13 +4,16 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
+        exclude: ^dags/
       - id: ruff-format
+        exclude: ^dags/
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.10.0
     hooks:
       - id: mypy
         additional_dependencies: [pydantic>=2.5, types-requests]
         args: [--config-file=pyproject.toml]
+        exclude: ^dags/ # <--- Игнорируем папку dags
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.18.0
     hooks:

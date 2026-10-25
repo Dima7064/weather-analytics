@@ -7,7 +7,7 @@ dependencies = [
     "requests>=2.31",
     "pydantic>=2.5",
     "sqlalchemy>=2.0",
-    "psycopg[binary]>=3.1",
+    "psycopg2-binary>=2.9",
     "pandas>=2.1",
     "typer>=0.9",
     "rich>=13.0",
@@ -50,7 +50,7 @@ python_version = "3.11"
 strict = true
 mypy_path = "ingestion/src"
 ignore_missing_imports = true
-exclude = ["data/"]
+exclude = ["data/", "dags/"] # <--- ДОБАВИЛИ ПАПКУ DAGS СЮДА
 
 [tool.pytest.ini_options]
 testpaths = ["ingestion/tests", "tests"]
