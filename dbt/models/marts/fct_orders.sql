@@ -4,13 +4,13 @@
     indexes=[
       {'columns': ['order_date']},
       {'columns': ['customer_id']}
-    ]
+    ],
+    on_schema_change='append_new_columns'
 ) }}
 
 with orders as (
     select * from {{ ref('stg_orders') }}
     {% if is_incremental() %}
-    -- Если это инкрементальный запуск, берем только заказы новее, чем максимальная дата в нашей таблице
     where order_date > (select max(order_date) from {{ this }})
     {% endif %}
 ),
