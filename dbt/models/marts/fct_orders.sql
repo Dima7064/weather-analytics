@@ -1,5 +1,18 @@
+{{ config(
+    materialized='incremental',
+    unique_key='order_id',
+    indexes=[
+      {'columns': ['order_date']},
+      {'columns': ['customer_id']}
+    ]
+) }}
+
 with orders as (
     select * from {{ ref('stg_orders') }}
+    {% if is_incremental() %}
+    -- Если это инкрементальный запуск, берем только заказы новее, чем максимальная дата в нашей таблице
+    where order_date > (select max(order_date) from {{ this }})
+    {% endif %}
 ),
 products as (
     select * from {{ ref('dim_products') }}
