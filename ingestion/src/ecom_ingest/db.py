@@ -53,10 +53,27 @@ def init_db() -> None:
                 product_id INTEGER,
                 quantity INTEGER,
                 status VARCHAR(50),
-                order_date TIMESTAMP
+                order_date TIMESTAMP,
+                paid_at TIMESTAMP,
+                shipped_at TIMESTAMP,
+                delivered_at TIMESTAMP
             );
         """)
         )
+
+        # Так как мы добавили новые колонки, а таблица уже существует,
+        # добавим их принудительно (на случай если таблица старая)
+        try:
+            conn.execute(text("ALTER TABLE raw.orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP;"))
+            conn.execute(
+                text("ALTER TABLE raw.orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMP;")
+            )
+            conn.execute(
+                text("ALTER TABLE raw.orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMP;")
+            )
+        except Exception:
+            pass
+
     logger.info("База данных готова.")
 
 
@@ -66,16 +83,10 @@ def load_csv_to_raw(csv_path: str, table_name: str) -> None:
     df = pd.read_csv(csv_path)
     engine = get_engine()
 
-    # Очищаем таблицу перед вставкой новых данных, чтобы не было дублей
     with engine.begin() as conn:
         conn.execute(text(f"TRUNCATE TABLE raw.{table_name};"))
 
     df.to_sql(
-        name=table_name,
-        con=engine,
-        schema="raw",
-        if_exists="append",  # Теперь мы ДОБАВЛЯЕМ данные, а не пересоздаем таблицу
-        index=False,
-        method="multi",
+        name=table_name, con=engine, schema="raw", if_exists="append", index=False, method="multi"
     )
     logger.info(f"Успешно загружено {len(df)} строк в raw.{table_name}.")
