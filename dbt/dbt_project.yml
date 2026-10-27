@@ -1,7 +1,6 @@
 name: "ecom_analytics"
 version: "1.0.0"
 config-version: 2
-
 profile: "ecom_analytics"
 
 model-paths: ["models"]
@@ -24,3 +23,8 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+# Настройка для dbt_artifacts
+vars:
+  dbt_artifacts:
+    dbt_artifacts_schema: dbt_artifacts

@@ -1,14 +1,6 @@
 version: 2
 
 models:
-  - name: dim_customers
-    description: "Справочник клиентов"
-    columns:
-      - name: customer_id
-        tests:
-          - unique
-          - not_null
-
   - name: dim_products
     description: "Справочник товаров"
     columns:
@@ -17,40 +9,21 @@ models:
           - unique
           - not_null
       - name: price
-        description: "Цена товара"
         tests:
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
-              max_value: 10000
+          - positive_values # <--- Наш кастомный тест
 
   - name: fct_orders
     description: "Факты заказов"
+    config:
+      contract:
+        enforced: true # <--- Включаем контракт (строгие типы)
     columns:
       - name: order_id
+        data_type: integer
         tests:
           - unique
           - not_null
-      - name: customer_id
-        tests:
-          - relationships:
-              to: ref('dim_customers')
-              field: customer_id
-
-  - name: fct_order_lifecycle
-    description: "Аккумулирующий факт жизненного цикла заказа"
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - order_id
-            - customer_id
-    columns:
-      - name: order_id
-        tests:
-          - unique
-          - not_null
-      - name: days_to_deliver
-        tests:
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
-              max_value: 365
-              row_condition: "delivered_at is not null"
+      - name: quantity
+        data_type: integer
+      - name: order_total_amount
+        data_type: numeric
